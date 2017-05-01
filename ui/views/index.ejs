@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <script>
+        function initialize() {
+            var mapOptions = {
+                zoom: 4,
+                center: {
+                    lat: 0,
+                    lng: 0
+                },
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            }
+            var map = new google.maps.Map(document.getElementById("map"), mapOptions);
+            map.data.loadGeoJson('http://localhost:3000/geojson', {}, function(data) {
+                var bounds = new google.maps.LatLngBounds();
+                map.data.forEach(function(feature) {
+                    feature.getGeometry().forEachLatLng(function(latlng) {
+                        bounds.extend(latlng);
+                    });
+                });
+                map.fitBounds(bounds);
+            });
+
+            google.maps.event.addListener(map.data, 'addfeature', function(e) {
+                console.log(e);
+            });
+
+            var socket = io.connect('http://localhost:3000');
+            socket.on('messages', function(data) {
+              console.log(data);
+            });
+            socket.on('data-added', function(data){
+              console.log(data);
+              map.data.addGeoJson(data);
+            });
+        }
+
+
+        function loadScript() {
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = "http://maps.google.com/maps/api/js?key=AIzaSyBX1WFKGEwdQSwRMv06KWaqWZeF1HaefeE&callback=initialize";
+            document.body.appendChild(script);
+        }
+        window.onload = loadScript;
+    </script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        div#map {
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script src="/jquery/dist/jquery.js"></script>
+    <script src="/socket.io-client/dist/socket.io.js"></script>
+</body>
+
+</html>
